@@ -1,0 +1,2338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JP CYBEROPS - Asistente Virtual</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* Estilos generales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        body {
+            background-color: #f3f4f6;
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(to right, #1e3a8a, #1d4ed8);
+            color: white;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            background-color: rgba(52, 211, 153, 0.2);
+            padding: 0.5rem;
+            border-radius: 9999px;
+        }
+
+        .logo-icon i {
+            color: #34d399;
+            font-size: 1.5rem;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+        }
+
+        .status-indicator {
+            position: relative;
+            height: 0.75rem;
+            width: 0.75rem;
+        }
+
+        .status-ping {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            border-radius: 9999px;
+            background-color: #34d399;
+            opacity: 0.75;
+            animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        .status-dot {
+            position: relative;
+            border-radius: 9999px;
+            height: 0.75rem;
+            width: 0.75rem;
+            background-color: #10b981;
+        }
+
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* Contenedor principal del chat */
+        .main-container {
+            flex: 1;
+            max-width: 1152px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 1.25rem;
+            height: calc(100vh - 140px);
+        }
+
+        .chat-container {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Encabezado del chat */
+        .chat-header {
+            background-color: #1e3a8a;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .chat-header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .chat-header-title i {
+            color: #34d399;
+        }
+
+        .chat-header-time {
+            font-size: 0.875rem;
+        }
+
+        /* Área de mensajes */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            background-color: #f9fafb;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        /* Mensajes */
+        .message {
+            display: flex;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 64rem;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .message.bot .message-content {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .message.user .message-content {
+            background-color: #d1fae5;
+            text-align: right;
+            border-right: 4px solid #10b981;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .message.bot .message-header {
+            color: #1d4ed8;
+            justify-content: flex-start;
+        }
+
+        .message.user .message-header {
+            color: #065f46;
+            justify-content: flex-end;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-left: 0.5rem;
+        }
+
+        .message-text {
+            color: #1f2937;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Estilos para texto destacado en respuestas */
+        .highlight-text {
+            color: #1d4ed8;
+            font-weight: 600;
+            background-color: rgba(59, 130, 246, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin: 2px 0;
+        }
+
+        .step-number {
+            display: inline-block;
+            background-color: #3b82f6;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            margin-right: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .warning-text {
+            color: #dc2626;
+            font-weight: 600;
+            background-color: rgba(220, 38, 38, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .success-text {
+            color: #059669;
+            font-weight: 600;
+            background-color: rgba(5, 150, 105, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .info-text {
+            color: #7c3aed;
+            font-weight: 600;
+            background-color: rgba(124, 58, 237, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Opciones de menú con iconos */
+        .menu-options {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .menu-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background-color: white;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .menu-option:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: #f9fafb;
+        }
+
+        .menu-option.warning {
+            border-color: #f87171;
+        }
+
+        .menu-option.warning:hover {
+            background-color: #fef2f2;
+        }
+
+        .menu-option-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            background-color: #1e3a8a;
+            color: white;
+            border-radius: 9999px;
+            font-weight: bold;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .menu-option.warning .menu-option-icon {
+            background-color: #ef4444;
+        }
+
+        .menu-option-content {
+            flex: 1;
+        }
+
+        .menu-option-label {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .menu-option-desc {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        /* Opciones de botones simples */
+        .button-options {
+            margin-top: 0.75rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .button-option {
+            background-color: white;
+            border: 1px solid #d1d5db;
+            color: #374151;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .button-option:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        /* Formulario de ticket */
+        .ticket-form {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+            font-size: 0.95rem;
+        }
+
+        .form-label .required {
+            color: #ef4444;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .form-submit {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .form-submit:hover {
+            background-color: #2563eb;
+        }
+
+        .form-submit:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .priority-info {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .priority-critical {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .priority-high {
+            background-color: #fffbeb;
+            color: #d97706;
+            border: 1px solid #fde68a;
+        }
+
+        .priority-medium {
+            background-color: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+        }
+
+        .priority-low {
+            background-color: #f0fdf4;
+            color: #059669;
+            border: 1px solid #bbf7d0;
+        }
+
+        /* Indicador de escritura */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            width: fit-content;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .typing-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            background-color: #3b82f6;
+            border-radius: 9999px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        .typing-text {
+            font-size: 0.875rem;
+            color: #4b5563;
+        }
+
+        /* Área de entrada */
+        .input-area {
+            border-top: 1px solid #e5e7eb;
+            padding: 1rem;
+            background-color: white;
+            flex-shrink: 0;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .message-input {
+            flex: 1;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .message-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .message-input:disabled {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+        }
+
+        .send-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .send-button:hover {
+            background-color: #2563eb;
+        }
+
+        .send-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #1e3a8a;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .footer-links {
+            margin-top: 0.25rem;
+        }
+
+        .footer-link {
+            color: #34d399;
+            text-decoration: none;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        .footer-link + .footer-link {
+            margin-left: 0.5rem;
+        }
+
+        /* Utilidades */
+        .hidden {
+            display: none !important;
+        }
+
+        .empty-line {
+            height: 1.2em;
+            display: block;
+        }
+        
+        .cancel-button {
+            background-color: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+        
+        .cancel-button:hover {
+            background-color: #e5e7eb;
+            border-color: #9ca3af;
+        }
+        
+        .diagnosis-step {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .diagnosis-question {
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 0.5rem;
+        }
+        
+        .quick-solution {
+            background-color: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .quick-solution-title {
+            font-weight: 600;
+            color: #065f46;
+            margin-bottom: 0.5rem;
+        }
+        
+        .current-question {
+            background-color: #e0f2fe;
+            border-left: 4px solid #0ea5e9;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .current-question-title {
+            font-weight: 600;
+            color: #0369a1;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            margin: 0 0.5rem;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Estilos para el formulario de preguntas de diagnóstico */
+        .question-input {
+            margin-top: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .diagnosis-form {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-top: 0.5rem;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .diagnosis-question-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .diagnosis-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .diagnosis-summary {
+            background-color: #f9fafb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .diagnosis-response-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .diagnosis-response-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="header-logo">
+                <div class="logo-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h1 class="header-title">JP CYBEROPS - Asistente Virtual</h1>
+            </div>
+            <div class="status-badge">
+                <div class="status-indicator">
+                    <span class="status-ping"></span>
+                    <span class="status-dot"></span>
+                </div>
+                <span>Asistente Virtual Activo</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor principal -->
+    <div class="main-container">
+        <div class="chat-container">
+            <!-- Encabezado del chat -->
+            <div class="chat-header">
+                <h2 class="chat-header-title">
+                    <i class="fas fa-server"></i>
+                    Asistente de Soporte Técnico
+                </h2>
+                <span class="chat-header-time" id="current-time"></span>
+            </div>
+
+            <!-- Área de mensajes -->
+            <div class="messages-area" id="messages-area">
+                <!-- Los mensajes se añadirán aquí dinámicamente -->
+            </div>
+
+            <!-- Indicador de escritura -->
+            <div class="typing-indicator hidden" id="typing-indicator">
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+                <span class="typing-text">El asistente está escribiendo...</span>
+            </div>
+
+            <!-- Área de entrada -->
+            <div class="input-area">
+                <div class="input-container">
+                    <input 
+                        type="text" 
+                        class="message-input" 
+                        id="message-input" 
+                        placeholder="Escribe tu mensaje aquí..."
+                        disabled
+                    >
+                    <button class="send-button" id="send-button" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                        Enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>JP CYBEROPS © 2023 - Chatbot de Soporte Técnico Especializado en Ciberseguridad</p>
+        <div class="footer-links">
+            <a href="#" class="footer-link">Política de Privacidad</a>
+            <a href="#" class="footer-link">Protocolos de Seguridad</a>
+        </div>
+    </footer>
+
+    <!-- Script principal -->
+    <script>
+        // --- CONFIGURACIÓN Y DATOS ---
+        const MENU_PRINCIPAL = [
+            { id: 'faq', label: 'Preguntas Frecuentes (FAQ)', icon: '1', desc: 'Respuestas a consultas comunes' },
+            { id: 'tech', label: 'Problema Técnico de Ciberseguridad', icon: '2', desc: 'Incidentes, malware, phishing, etc.' },
+            { id: 'billing', label: 'Cuenta y Facturación', icon: '3', desc: 'Pagos, facturas, datos de cuenta' },
+            { id: 'services', label: 'Información sobre Servicios', icon: '4', desc: 'Conoce nuestros servicios de ciberseguridad' },
+            { id: 'human', label: 'Hablar con un agente humano ⚠️', icon: '5', desc: 'Escalación a especialista', warning: true },
+        ];
+
+        const FAQ_DATA = {
+            access: {
+                label: '🔐 Accesos y Cuentas',
+                questions: [
+                    { 
+                        q: '¿Cómo cambio mi contraseña?', 
+                        a: 'Para cambiar tu contraseña, sigue estos pasos:\n\n1️⃣ Ingresa a la plataforma donde tienes tu cuenta.\n2️⃣ Ve a la sección Configuración o Seguridad.\n3️⃣ Selecciona "Cambiar contraseña".\n4️⃣ Ingresa tu contraseña actual.\n5️⃣ Escribe tu nueva contraseña (usa mayúsculas, minúsculas, números y símbolos).\n6️⃣ Guarda los cambios.\n\nSi deseas, puedo guiarte paso a paso según la plataforma que uses.' 
+                    },
+                    { 
+                        q: '¿Cómo recupero mi contraseña?', 
+                        a: 'Para recuperar tu acceso:\n\n1️⃣ En la pantalla de inicio de sesión, haz clic en "¿Olvidaste tu contraseña?".\n2️⃣ Ingresa tu correo electrónico registrado.\n3️⃣ Revisa tu bandeja de entrada (y spam) buscando el enlace de restablecimiento.\n4️⃣ Haz clic en el enlace y crea una nueva contraseña segura.' 
+                    },
+                    { 
+                        q: 'Olvidé mi usuario, ¿qué hago?', 
+                        a: 'Recuperación de Usuario\n\n1️⃣ Busca en tu correo mensajes antiguos de bienvenida de "JP CYBEROPS".\n2️⃣ Intenta ingresar con tu correo electrónico en lugar del usuario.\n3️⃣ Si es una cuenta corporativa, contacta al administrador de TI de tu empresa.\n\nPor seguridad, no puedo revelar nombres de usuario por este chat.' 
+                    },
+                    { 
+                        q: '¿Cómo activo la autenticación en dos pasos (2FA)?', 
+                        a: 'Para activar la seguridad extra (2FA):\n\n1️⃣ Descarga una app de autenticación (Google Authenticator o Authy).\n2️⃣ Ve a Mi Perfil > Seguridad.\n3️⃣ Selecciona "Activar 2FA".\n4️⃣ Escanea el código QR que aparece en pantalla con la app.\n5️⃣ Ingresa el código de 6 dígitos que genera la app para confirmar.' 
+                    },
+                    { 
+                        q: '¿Cómo cerrar sesiones abiertas?', 
+                        a: 'Cerrar sesiones remotas:\n\n1️⃣ Ve a Configuración de Cuenta.\n2️⃣ Busca la opción "Dispositivos" o "Sesiones Activas".\n3️⃣ Revisa la lista de lugares donde estás conectado.\n4️⃣ Haz clic en "Cerrar todas las sesiones" o elimina las que no reconozcas.' 
+                    }
+                ]
+            },
+            general: {
+                label: '🕐 Información General',
+                questions: [
+                    { 
+                        q: 'Horarios de soporte', 
+                        a: 'Nuestros Horarios\n\n🤖 Bot de Soporte: Disponible 24/7 para resolver dudas y crear tickets.\n\n👨‍💻 Especialistas Humanos: Atendemos de Lunes a Viernes de 8:00 AM a 6:00 PM.' 
+                    },
+                    { 
+                        q: '¿Cómo contacto a soporte?', 
+                        a: 'Canales de Contacto\n\nPuedes usar cualquiera de estos medios:\n\n1️⃣ Este chat: Para diagnósticos rápidos y tickets.\n2️⃣ Correo: soporte@jpcyberops.com\n3️⃣ Portal de Clientes: En nuestra web oficial.\n4️⃣ Teléfono: Solo para emergencias críticas (Nivel Enterprise).' 
+                    }
+                ]
+            },
+            config: {
+                label: '🌐 Configuraciones Básicas',
+                questions: [
+                    { 
+                        q: '¿Cómo configurar una VPN?', 
+                        a: 'Configuración básica de VPN:\n\n1️⃣ Descarga el cliente VPN corporativo recomendado.\n2️⃣ Instala el programa siguiendo las instrucciones.\n3️⃣ Ábrelo e ingresa la dirección del servidor (provista por TI).\n4️⃣ Ingresa tus credenciales de usuario.\n5️⃣ Haz clic en "Conectar" y espera a que el ícono se pute verde.' 
+                    },
+                    { 
+                        q: '¿Cómo instalar el antivirus recomendado?', 
+                        a: 'Instalación de Antivirus:\n\n1️⃣ Accede al portal de descargas de la empresa.\n2️⃣ Descarga el instalador del antivirus oficial.\n3️⃣ Ejecuta el archivo descargado.\n4️⃣ Sigue los pasos del asistente (Siguiente > Aceptar).\n5️⃣ Al finalizar, reinicia tu equipo y ejecuta un primer análisis completo.' 
+                    },
+                    { 
+                        q: 'Actualizar sistema de forma segura', 
+                        a: 'Actualizaciones Seguras:\n\n1️⃣ Ve a Configuración > Windows Update (o Actualización de Software en Mac).\n2️⃣ Haz clic en "Buscar actualizaciones".\n3️⃣ Instala solo las actualizaciones oficiales del sistema.\n4️⃣ Reinicia el equipo cuando se solicite.\n\nNunca descargues actualizaciones desde anuncios o correos extraños.' 
+                    },
+                    { 
+                        q: '¿Cómo hacer una copia de seguridad (backup)?', 
+                        a: 'Crear un Backup:\n\n1️⃣ Conecta un disco duro externo o accede a tu nube corporativa (OneDrive/Google Drive).\n2️⃣ Selecciona las carpetas importantes (Documentos, Escritorio, Imágenes).\n3️⃣ Copia y pega los archivos en la unidad externa o súbelos a la nube.\n4️⃣ Verifica que los archivos se abran correctamente en el destino.' 
+                    },
+                    { 
+                        q: '¿Cómo proteger mi WiFi?', 
+                        a: 'Seguridad WiFi Básica:\n\n1️⃣ Ingresa a la configuración de tu router.\n2️⃣ Cambia la contraseña por defecto por una frase larga y compleja.\n3️⃣ Asegúrate de que el cifrado esté en WPA2 o WPA3.\n4️⃣ Cambia el nombre de la red (SSID) para no revelar tu modelo de router o apellido.' 
+                    }
+                ]
+            },
+            security: {
+                label: '🛡️ Seguridad Básica',
+                questions: [
+                    { 
+                        q: '¿Qué es el phishing?', 
+                        a: 'Definición de Phishing\n\nEs una técnica de ciberdelincuencia donde los estafadores envían correos o mensajes fraudulentos haciéndose pasar por empresas legítimas (bancos, servicios) para engañarte y robar tus contraseñas o datos bancarios.' 
+                    },
+                    { 
+                        q: '¿Cómo identificar un correo falso?', 
+                        a: 'Señales de Alerta:\n\n🚩 Remitente: El correo no coincide con la empresa oficial (ej: soporte@amazon-seguridad.com).\n🚩 Urgencia: Te amenazan con cerrar tu cuenta si no actúas ya.\n🚩 Errores: Mala ortografía o redacción extraña.\n🚩 Enlaces: Al pasar el mouse, la dirección web es desconocida.' 
+                    },
+                    { 
+                        q: '¿Cómo saber si tengo malware?', 
+                        a: 'Síntomas comunes de infección:\n\n🔸 El equipo está muy lento de repente.\n🔸 Aparecen ventanas emergentes (pop-ups) constantes.\n🔸 El antivirus está desactivado y no puedes activarlo.\n🔸 Archivos desaparecen o cambian de nombre.\n\nSi te pasa esto, ve a "Problema Técnico" inmediatamente.' 
+                    },
+                    { 
+                        q: '¿Qué hacer si recibo un correo sospechoso?', 
+                        a: 'Protocolo ante correos sospechosos:\n\n1️⃣ NO abras ningún archivo adjunto.\n2️⃣ NO hagas clic en ningún enlace.\n3️⃣ NO respondas al correo.\n4️⃣ Marca el mensaje como SPAM o repórtalo al área de seguridad.\n5️⃣ Elimina el mensaje inmediatamente.' 
+                    }
+                ]
+            }
+        };
+
+        const BILLING_DATA = {
+            account: {
+                label: '👤 Cuenta',
+                questions: [
+                    { q: '¿Cómo creo una cuenta?', a: 'Para crear una cuenta:\n\n1️⃣ Ve a la página principal de registro.\n2️⃣ Completa el formulario con tu correo corporativo.\n3️⃣ Crea una contraseña segura.\n4️⃣ Revisa tu bandeja de entrada para verificar tu correo.' },
+                    { q: '¿Cómo actualizo mis datos?', a: 'Para actualizar tus datos:\n\n1️⃣ Inicia sesión en tu cuenta.\n2️⃣ Ve a Mi Perfil > Información Personal.\n3️⃣ Edita los campos necesarios (nombre, cargo, etc.).\n4️⃣ Haz clic en "Guardar cambios".' },
+                    { q: '¿Cómo cambio mi correo?', a: 'Cambiar correo electrónico:\n\n1️⃣ Ve a Configuración de Cuenta > Seguridad.\n2️⃣ Selecciona "Cambiar Correo".\n3️⃣ Ingresa el nuevo correo.\n4️⃣ Te enviaremos un código de verificación al nuevo correo para confirmar.' },
+                    { q: '¿Cómo elimino mi cuenta?', a: 'Para eliminar tu cuenta:\n\n1️⃣ Ve a Configuración > Privacidad y Datos.\n2️⃣ Haz clic en "Eliminar Cuenta".\n3️⃣ Confirma tu contraseña.\nNota: Esta acción es irreversible y perderás tu historial.' }
+                ]
+            },
+            billing: {
+                label: '💳 Facturación',
+                questions: [
+                    { q: '¿Cómo descargo una factura?', a: 'Para descargar tu factura:\n\n1️⃣ Inicia sesión en tu cuenta.\n2️⃣ Ve a la sección Facturación o Pagos.\n3️⃣ Selecciona el mes que deseas.\n4️⃣ Haz clic en Descargar factura (PDF).' },
+                    { q: '¿Qué métodos de pago aceptan?', a: 'Métodos de pago aceptados:\n\n✅ Tarjetas de crédito/débito (Visa, Mastercard, Amex).\n✅ Transferencias bancarias (SPEI / SWIFT).\n✅ PayPal para planes mensuales.' },
+                    { q: '¿Cómo actualizo mis datos de facturación?', a: 'Actualizar datos fiscales:\n\n1️⃣ Ve a Facturación > Datos Fiscales.\n2️⃣ Edita tu Razón Social, Dirección o RFC/NIT.\n3️⃣ Guarda los cambios para que apliquen en la próxima factura.' },
+                    { q: '¿Cómo cancelo mi suscripción?', a: 'Cancelar suscripción:\n\n1️⃣ Ve a Facturación > Suscripción.\n2️⃣ Haz clic en "Cancelar servicio".\n3️⃣ Completa la encuesta de salida.\n4️⃣ Tu servicio seguirá activo hasta el final del periodo pagado.' }
+                ]
+            }
+        };
+
+        const SERVICES_DATA = [
+            { 
+                id: 'soc', 
+                title: 'Monitoreo de Seguridad (SOC / SIEM)', 
+                desc: 'Vigilancia continua 24/7 de tu infraestructura digital para detectar y responder a amenazas en tiempo real.',
+                includes: ['Monitoreo de logs en tiempo real.', 'Correlación de eventos (SIEM).', 'Alertas tempranas de intrusión.', 'Reportes mensuales de actividad.'],
+                target: 'Empresas con infraestructura crítica que requieren vigilancia constante.'
+            },
+            { 
+                id: 'audit', 
+                title: 'Auditorías de Seguridad', 
+                desc: 'Evaluación exhaustiva de tus políticas, controles y configuraciones de seguridad actuales.',
+                includes: ['Revisión de políticas de seguridad.', 'Análisis de configuración de red.', 'Evaluación de control de accesos.', 'Informe de brechas detectadas.'],
+                target: 'Organizaciones que necesitan validar su postura de seguridad actual.'
+            },
+            { 
+                id: 'pentesting', 
+                title: 'Pruebas de Penetración (Pentesting)', 
+                desc: 'Simulación de ataques controlados (Hacking Ético) para identificar vulnerabilidades antes de que sean explotadas.',
+                includes: ['Análisis de aplicaciones web.', 'Evaluación de infraestructura.', 'Pruebas de red interna y externa.', 'Reporte detallado de hallazgos.', 'Recomendaciones de mitigación.'],
+                target: 'Empresas que desean conocer su nivel real de seguridad y cumplir normativas.'
+            },
+            { 
+                id: 'firewall', 
+                title: 'Implementación de Firewall', 
+                desc: 'Configuración y despliegue de barreras de defensa perimetral para filtrar tráfico malicioso.',
+                includes: ['Instalación de Firewall (Físico/Virtual).', 'Configuración de reglas de filtrado.', 'Segmentación de red.', 'Protección contra intrusos (IPS).'],
+                target: 'Empresas que necesitan proteger su red interna de accesos externos.'
+            },
+            { 
+                id: 'cloud', 
+                title: 'Seguridad en la Nube', 
+                desc: 'Protección de datos, aplicaciones e infraestructura alojada en servicios cloud (AWS, Azure, Google Cloud).',
+                includes: ['Hardening de entornos cloud.', 'Gestión de identidad (IAM).', 'Cifrado de datos en reposo y tránsito.', 'Auditoría de configuración cloud.'],
+                target: 'Empresas migrando a la nube o nativas digitales.'
+            },
+            { 
+                id: 'incidents', 
+                title: 'Respuesta a Incidentes', 
+                desc: 'Equipo de reacción rápida para contener, erradicar y recuperar sistemas durante un ciberataque activo.',
+                includes: ['Contención inmediata de la amenaza.', 'Análisis forense digital.', 'Recuperación de servicios.', 'Informe post-incidente.'],
+                target: 'Organizaciones bajo ataque activo o que requieren un plan de respuesta.'
+            },
+            { 
+                id: 'backup', 
+                title: 'Backup y Recuperación', 
+                desc: 'Estrategias de copias de seguridad robustas para garantizar la continuidad del negocio ante desastres.',
+                includes: ['Diseño de política de backups (3-2-1).', 'Automatización de copias.', 'Pruebas de restauración periódicas.', 'Cifrado de copias de seguridad.'],
+                target: 'Cualquier empresa que valore sus datos y la continuidad operativa.'
+            },
+            { 
+                id: 'hardening', 
+                title: 'Hardening de Sistemas', 
+                desc: 'Proceso de endurecimiento de sistemas operativos y aplicaciones para reducir la superficie de ataque.',
+                includes: ['Desactivación de servicios innecesarios.', 'Gestión de parches y actualizaciones.', 'Configuración segura de parámetros.', 'Restricción de privilegios.'],
+                target: 'Empresas que buscan asegurar servidores y estaciones de trabajo.'
+            },
+            { 
+                id: 'compliance', 
+                title: 'Cumplimiento (ISO 27001, NIST)', 
+                desc: 'Asesoría para alinear tus procesos de seguridad con estándares internacionales y normativas legales.',
+                includes: ['Análisis de brecha (Gap Analysis).', 'Desarrollo de documentación.', 'Preparación para auditorías de certificación.', 'Capacitación al personal.'],
+                target: 'Empresas que requieren certificaciones o cumplimiento regulatorio.'
+            },
+            { 
+                id: 'consulting', 
+                title: 'Consultoría en Ciberseguridad', 
+                desc: 'Asesoramiento estratégico personalizado para diseñar y mejorar tu plan director de seguridad.',
+                includes: ['Diagnóstico de madurez.', 'Diseño de arquitectura de seguridad.', 'Consultoría CISO as a Service.', 'Planificación presupuestaria.'],
+                target: 'Empresas que necesitan dirección estratégica en seguridad.'
+            }
+        ];
+
+        const INCIDENT_TYPES = [
+            { id: 'access_unauth', label: 'Acceso no autorizado' },
+            { id: 'malware', label: 'Malware' },
+            { id: 'phishing', label: 'Phishing' },
+            { id: 'ransomware', label: 'Ransomware' },
+            { id: 'account_compromised', label: 'Cuenta comprometida' },
+            { id: 'leak', label: 'Fuga de información' },
+            { id: 'vuln', label: 'Vulnerabilidad' },
+            { id: 'ddos', label: 'DDoS' },
+            { id: 'firewall', label: 'Firewall' },
+            { id: 'vpn', label: 'VPN' },
+            { id: 'siem', label: 'SIEM / Logs' },
+            { id: 'other', label: 'Otro' }
+        ];
+
+        // Preguntas específicas reducidas a las más relevantes
+        const TECH_QUESTIONS = {
+            access_unauth: [
+                "¿Reconoces la ubicación o dispositivo del inicio de sesión alertado?",
+                "¿Has compartido tu contraseña o la usas en otros sitios web?",
+                "¿Tienes activada la verificación en dos pasos (2FA)?"
+            ],
+            malware: [
+                "¿Tu antivirus ha mostrado alguna alerta específica recientemente?",
+                "¿El problema comenzó tras descargar un archivo o instalar un programa nuevo?",
+                "¿Notas lentitud extrema o ventanas que se abren solas?"
+            ],
+            phishing: [
+                "¿Hiciste clic en algún enlace o descargaste adjuntos del mensaje sospechoso?",
+                "¿Llegaste a ingresar tus credenciales (usuario/contraseña) en el enlace?",
+                "¿La dirección del remitente coincide exactamente con la oficial de la empresa?"
+            ],
+            ransomware: [
+                "¿Aparece un mensaje pidiendo un pago o rescate en pantalla?",
+                "¿Puedes abrir tus archivos o tienen una extensión extraña (ej: .locked)?",
+                "¿Tienes copias de seguridad (backups) desconectadas de la red?"
+            ],
+            account_compromised: [
+                "¿Has perdido acceso a tu cuenta o han cambiado la contraseña?",
+                "¿Se han enviado mensajes o correos desde tu cuenta sin tu permiso?",
+                "¿Usas la misma contraseña para el correo y otras aplicaciones?"
+            ],
+            leak: [
+                "¿Qué tipo de información sensible ha sido expuesta (contraseñas, datos clientes)?",
+                "¿Cómo te enteraste de la fuga (aviso externo, monitoreo interno)?",
+                "¿El sistema afectado está expuesto a internet?"
+            ],
+            ddos: [
+                "¿El servicio está totalmente inaccesible o solo muy lento?",
+                "¿Has recibido alguna amenaza de ataque recientemente?",
+                "¿Tienes logs que muestren un pico inusual de tráfico?"
+            ],
+            firewall: [
+                "¿El bloqueo afecta a todos los usuarios o solo a uno?",
+                "¿Se realizó algún cambio en las reglas de red recientemente?",
+                "¿Puedes acceder si te conectas desde otra red (ej: datos móviles)?"
+            ],
+            vpn: [
+                "¿Qué mensaje de error específico aparece al intentar conectar?",
+                "¿Tu conexión a internet local funciona correctamente?",
+                "¿Se actualizaron tus credenciales de red recientemente?"
+            ],
+            siem: [
+                "¿Cuál es la criticidad de la alerta generada?",
+                "¿Es un falso positivo o hay actividad real confirmada?",
+                "¿Se están recibiendo logs de la fuente afectada?"
+            ],
+            vuln: [
+                "¿Cuál es el nombre o código (CVE) de la vulnerabilidad?",
+                "¿El sistema afectado es crítico para el negocio?",
+                "¿Existe un parche oficial disponible por el proveedor?"
+            ],
+            other: [
+                "Describe brevemente el síntoma principal.",
+                "¿Desde cuándo ocurre el problema?",
+                "¿Impide esto trabajar totalmente?"
+            ]
+        };
+
+        // Reducimos también las preguntas básicas para ir al grano
+        const BASIC_QUESTIONS = [
+            "Sistema o dispositivo afectado"
+        ];
+
+        // Soluciones rápidas para cada tipo de incidente
+        const QUICK_SOLUTIONS = {
+            access_unauth: [
+                "1. Cambia inmediatamente todas tus contraseñas",
+                "2. Activa la autenticación en dos pasos (2FA)",
+                "3. Revisa y cierra todas las sesiones activas",
+                "4. Escanea tu equipo con un antivirus actualizado",
+                "5. Monitorea tu cuenta por actividades sospechosas"
+            ],
+            malware: [
+                "1. Desconecta el equipo de la red inmediatamente",
+                "2. Ejecuta un escaneo completo con tu antivirus",
+                "3. Usa herramientas de eliminación de malware (Malwarebytes)",
+                "4. Restaura el sistema a un punto anterior seguro",
+                "5. Actualiza tu sistema operativo y programas"
+            ],
+            phishing: [
+                "1. Cambia las contraseñas de las cuentas afectadas",
+                "2. Activa 2FA en todas tus cuentas importantes",
+                "3. Reporta el correo como phishing a tu proveedor",
+                "4. Monitorea tus cuentas bancarias por actividades sospechosas",
+                "5. Educa a tu equipo sobre cómo identificar phishing"
+            ],
+            ransomware: [
+                "1. AISLA el equipo de la red inmediatamente",
+                "2. NO pagues el rescate bajo ninguna circunstancia",
+                "3. Restaura desde backups limpios si los tienes",
+                "4. Contacta a profesionales en recuperación de datos",
+                "5. Reporta el incidente a las autoridades competentes"
+            ],
+            account_compromised: [
+                "1. Cambia la contraseña inmediatamente",
+                "2. Activa 2FA si no lo tenías activado",
+                "3. Revisa la configuración de seguridad de la cuenta",
+                "4. Verifica actividades recientes en la cuenta",
+                "5. Contacta al soporte oficial de la plataforma"
+            ]
+        };
+
+        // Tiempos de respuesta según criticidad
+        const RESPONSE_TIMES = {
+            'Crítica': 'de forma inmediata si estamos disponibles',
+            'Alta': 'de 20 a 30 minutos',
+            'Media': 'de 1 a 2 horas',
+            'Baja': 'de 2 a 6 horas dependiendo la disponibilidad de nuestros técnicos'
+        };
+
+        // --- ESTADO DE LA APLICACIÓN ---
+        let messages = [];
+        let flowState = "INIT";
+        let subStep = 0;
+        let ticketData = {};
+        let isTyping = false;
+        let currentFaqList = [];
+        let currentBillingList = [];
+        let currentIncidentType = '';
+        let diagnosisAnswers = [];
+        let currentQuestionIndex = 0;
+        let currentQuestions = [];
+
+        // --- REFERENCIAS A ELEMENTOS DOM ---
+        const messagesArea = document.getElementById('messages-area');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const currentTimeElement = document.getElementById('current-time');
+
+        // --- FUNCIONES AUXILIARES ---
+        function updateCurrentTime() {
+            const now = new Date();
+            const options = { weekday: 'long', hour: '2-digit', minute: '2-digit' };
+            currentTimeElement.textContent = now.toLocaleString('es-ES', options);
+        }
+
+        // Actualizar la hora cada minuto
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 60000);
+
+        function scrollToBottom() {
+            setTimeout(() => {
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            }, 100);
+        }
+
+        function generateUniqueId() {
+            return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        }
+
+        function formatText(text) {
+            if (!text) return '';
+            
+            // Primero, manejar las líneas
+            const lines = text.split('\n');
+            let result = '';
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (line.trim() === '') {
+                    result += '<div class="empty-line"></div>';
+                    continue;
+                }
+                
+                // Manejar pasos numerados
+                let formattedLine = line;
+                if (formattedLine.match(/^[1-9]️⃣/)) {
+                    const stepNum = formattedLine.charAt(0);
+                    formattedLine = `<span class="step-number">${stepNum}</span>` + formattedLine.substring(2);
+                }
+                
+                // Manejar emojis y listas
+                formattedLine = formattedLine
+                    .replace(/✅/g, '<span style="color: #059669;">✅</span>')
+                    .replace(/⚠️/g, '<span style="color: #d97706;">⚠️</span>')
+                    .replace(/🚩/g, '<span style="color: #dc2626;">🚩</span>')
+                    .replace(/🔸/g, '<span style="color: #7c3aed;">🔸</span>')
+                    .replace(/🛑/g, '<span style="color: #dc2626;">🛑</span>')
+                    .replace(/🔐/g, '<span style="color: #3b82f6;">🔐</span>')
+                    .replace(/🦠/g, '<span style="color: #059669;">🦠</span>')
+                    .replace(/🎣/g, '<span style="color: #d97706;">🎣</span>')
+                    .replace(/🔒/g, '<span style="color: #dc2626;">🔒</span>')
+                    .replace(/📤/g, '<span style="color: #7c3aed;">📤</span>')
+                    .replace(/🌐/g, '<span style="color: #3b82f6;">🌐</span>')
+                    .replace(/🔥/g, '<span style="color: #dc2626;">🔥</span>')
+                    .replace(/📊/g, '<span style="color: #7c3aed;">📊</span>')
+                    .replace(/🛡️/g, '<span style="color: #3b82f6;">🛡️</span>')
+                    .replace(/❓/g, '<span style="color: #6b7280;">❓</span>')
+                    .replace(/🤖/g, '<span style="color: #6b7280;">🤖</span>')
+                    .replace(/👨‍💻/g, '<span style="color: #3b82f6;">👨‍💻</span>')
+                    .replace(/👤/g, '<span style="color: #3b82f6;">👤</span>')
+                    .replace(/💳/g, '<span style="color: #7c3aed;">💳</span>')
+                    .replace(/🕐/g, '<span style="color: #d97706;">🕐</span>')
+                    .replace(/🌐/g, '<span style="color: #059669;">🌐</span>');
+                
+                // Manejar texto que debería resaltarse (reemplazar **texto** por span con clase highlight)
+                formattedLine = formattedLine.replace(/\*\*(.*?)\*\*/g, '<span class="highlight-text">$1</span>');
+                
+                result += `<div>${formattedLine}</div>`;
+            }
+            
+            return result;
+        }
+
+        function addBotMessage(text, options = null, html = null) {
+            isTyping = true;
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+            typingIndicator.classList.remove('hidden');
+            scrollToBottom();
+            
+            setTimeout(() => {
+                const messageId = generateUniqueId();
+                messages.push({ 
+                    id: messageId, 
+                    sender: 'bot', 
+                    text, 
+                    options,
+                    html 
+                });
+                renderMessages();
+                isTyping = false;
+                messageInput.disabled = false;
+                sendButton.disabled = !messageInput.value.trim();
+                typingIndicator.classList.add('hidden');
+                scrollToBottom();
+            }, 800);
+        }
+
+        function addUserMessage(text) {
+            const messageId = generateUniqueId();
+            messages.push({ id: messageId, sender: 'user', text });
+            renderMessages();
+            scrollToBottom();
+        }
+
+        function renderMessages() {
+            messagesArea.innerHTML = '';
+            
+            messages.forEach(msg => {
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${msg.sender}`;
+                messageElement.id = msg.id;
+                
+                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const senderName = msg.sender === 'bot' ? 'Asistente JP CYBEROPS' : 'Tú';
+                const senderIcon = msg.sender === 'bot' ? '<i class="fas fa-server"></i>' : '<i class="fas fa-user"></i>';
+                
+                // Usar HTML personalizado si existe
+                let messageContent = '';
+                if (msg.html) {
+                    messageContent = `
+                        <div class="message-content">
+                            <div class="message-header">
+                                ${msg.sender === 'bot' ? senderIcon + ' <span>' + senderName + '</span>' : '<span>' + senderName + '</span> ' + senderIcon}
+                                <span class="message-time">${time}</span>
+                            </div>
+                            <div class="message-text">${formatText(msg.text)}</div>
+                            ${msg.html}
+                        </div>
+                    `;
+                } else {
+                    let optionsHTML = '';
+                    if (msg.options && msg.options.length > 0) {
+                        if (msg.options[0].icon) {
+                            optionsHTML = `<div class="menu-options">${
+                                msg.options.map(opt => `
+                                    <div class="menu-option ${opt.warning ? 'warning' : ''}" data-id="${opt.id}" data-label="${opt.label}">
+                                        <div class="menu-option-icon">${opt.icon}</div>
+                                        <div class="menu-option-content">
+                                            <div class="menu-option-label">${opt.label}</div>
+                                            ${opt.desc ? `<div class="menu-option-desc">${opt.desc}</div>` : ''}
+                                        </div>
+                                    </div>
+                                `).join('')
+                            }</div>`;
+                        } else {
+                            optionsHTML = `<div class="button-options">${
+                                msg.options.map(opt => `
+                                    <button class="button-option" data-id="${opt.id}" data-label="${opt.label}">${opt.label}</button>
+                                `).join('')
+                            }</div>`;
+                        }
+                    }
+                    
+                    messageContent = `
+                        <div class="message-content">
+                            <div class="message-header">
+                                ${msg.sender === 'bot' ? senderIcon + ' <span>' + senderName + '</span>' : '<span>' + senderName + '</span> ' + senderIcon}
+                                <span class="message-time">${time}</span>
+                            </div>
+                            <div class="message-text">${formatText(msg.text)}</div>
+                            ${optionsHTML}
+                        </div>
+                    `;
+                }
+                
+                messageElement.innerHTML = messageContent;
+                messagesArea.appendChild(messageElement);
+                
+                // Agregar event listeners a las opciones
+                if (msg.options && msg.options.length > 0 && !msg.html) {
+                    setTimeout(() => {
+                        if (msg.options[0].icon) {
+                            msg.options.forEach(opt => {
+                                const optionElement = messageElement.querySelector(`[data-id="${opt.id}"]`);
+                                if (optionElement) {
+                                    optionElement.addEventListener('click', () => handleOptionClick(opt));
+                                }
+                            });
+                        } else {
+                            msg.options.forEach(opt => {
+                                const buttonElement = messageElement.querySelector(`[data-id="${opt.id}"]`);
+                                if (buttonElement) {
+                                    buttonElement.addEventListener('click', () => handleOptionClick(opt));
+                                }
+                            });
+                        }
+                    }, 50);
+                }
+            });
+            
+            scrollToBottom();
+        }
+
+        function generatePDFTicket(ticketData) {
+            // Crear un nuevo documento PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Configuración
+            const pageWidth = doc.internal.pageSize.width;
+            const margin = 20;
+            let yPos = margin;
+            
+            // Logo y encabezado
+            doc.setFillColor(30, 58, 138); // Azul oscuro
+            doc.rect(0, 0, pageWidth, 40, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont('helvetica', 'bold');
+            doc.text('JP CYBEROPS', pageWidth / 2, 25, { align: 'center' });
+            
+            doc.setFontSize(14);
+            doc.text('TICKET DE SOPORTE TÉCNICO', pageWidth / 2, 35, { align: 'center' });
+            
+            yPos = 55;
+            
+            // Información del ticket
+            doc.setFillColor(239, 246, 255); // Azul claro
+            doc.rect(margin, yPos - 10, pageWidth - 2 * margin, 80, 'F');
+            
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            
+            // ID del Ticket
+            doc.setFont('helvetica', 'bold');
+            doc.text('ID DEL TICKET:', margin + 5, yPos);
+            doc.setFont('helvetica', 'normal');
+            doc.text(ticketData.ticketID, margin + 50, yPos);
+            
+            // Fecha
+            yPos += 10;
+            doc.setFont('helvetica', 'bold');
+            doc.text('FECHA Y HORA:', margin + 5, yPos);
+            doc.setFont('helvetica', 'normal');
+            doc.text(new Date().toLocaleString('es-ES'), margin + 50, yPos);
+            
+            // Nombre
+            yPos += 10;
+            doc.setFont('helvetica', 'bold');
+            doc.text('NOMBRE:', margin + 5, yPos);
+            doc.setFont('helvetica', 'normal');
+            doc.text(ticketData.name, margin + 50, yPos);
+            
+            // Correo
+            yPos += 10;
+            doc.setFont('helvetica', 'bold');
+            doc.text('CORREO:', margin + 5, yPos);
+            doc.setFont('helvetica', 'normal');
+            doc.text(ticketData.email, margin + 50, yPos);
+            
+            // Prioridad con color según nivel
+            yPos += 10;
+            doc.setFont('helvetica', 'bold');
+            doc.text('PRIORIDAD:', margin + 5, yPos);
+            
+            let priorityColor;
+            switch(ticketData.priority) {
+                case 'Crítica': priorityColor = [220, 38, 38]; break; // Rojo
+                case 'Alta': priorityColor = [217, 119, 6]; break; // Naranja
+                case 'Media': priorityColor = [59, 130, 246]; break; // Azul
+                case 'Baja': priorityColor = [5, 150, 105]; break; // Verde
+                default: priorityColor = [107, 114, 128]; // Gris
+            }
+            
+            doc.setTextColor(...priorityColor);
+            doc.setFont('helvetica', 'bold');
+            doc.text(ticketData.priority, margin + 50, yPos);
+            
+            // Tiempo de respuesta estimado
+            yPos += 10;
+            doc.setTextColor(0, 0, 0);
+            doc.setFont('helvetica', 'bold');
+            doc.text('TIEMPO DE RESPUESTA:', margin + 5, yPos);
+            doc.setFont('helvetica', 'normal');
+            doc.text(RESPONSE_TIMES[ticketData.priority] || 'Por definir', margin + 70, yPos);
+            
+            yPos += 15;
+            
+            // Motivo/Descripción
+            doc.setFillColor(249, 250, 251); // Gris claro
+            doc.rect(margin, yPos, pageWidth - 2 * margin, 40, 'F');
+            
+            doc.setFont('helvetica', 'bold');
+            doc.text('DESCRIPCIÓN DEL PROBLEMA:', margin + 5, yPos + 10);
+            
+            doc.setFont('helvetica', 'normal');
+            const description = ticketData.description || ticketData.reason || 'No especificado';
+            const splitDescription = doc.splitTextToSize(description, pageWidth - 2 * margin - 10);
+            doc.text(splitDescription, margin + 5, yPos + 20);
+            
+            yPos += 50;
+            
+            // Información de contacto
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.text('INFORMACIÓN DE CONTACTO:', margin + 5, yPos);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.text('• Teléfono: +34 900 123 456', margin + 5, yPos + 8);
+            doc.text('• Email: soporte@jpcyberops.com', margin + 5, yPos + 16);
+            doc.text('• Web: www.jpcyberops.com', margin + 5, yPos + 24);
+            
+            yPos += 35;
+            
+            // Pie de página
+            doc.setDrawColor(30, 58, 138);
+            doc.setLineWidth(0.5);
+            doc.line(margin, yPos, pageWidth - margin, yPos);
+            
+            yPos += 10;
+            doc.setFontSize(10);
+            doc.setTextColor(107, 114, 128);
+            doc.text('Este ticket ha sido generado automáticamente por el sistema de soporte de JP CYBEROPS.', pageWidth / 2, yPos, { align: 'center' });
+            yPos += 6;
+            doc.text('Un especialista se contactará con usted en el tiempo estimado indicado.', pageWidth / 2, yPos, { align: 'center' });
+            
+            // Guardar el PDF
+            doc.save(`ticket-${ticketData.ticketID}.pdf`);
+            
+            return true;
+        }
+
+        function showMainMenu() {
+            flowState = "MENU";
+            addBotMessage("Selecciona una opción para continuar:", MENU_PRINCIPAL);
+        }
+
+        function handleOptionClick(option) {
+            addUserMessage(option.label || option);
+            processFlow(option.id || option);
+        }
+
+        function handleSend() {
+            const text = messageInput.value.trim();
+            if (!text) return;
+            
+            addUserMessage(text);
+            messageInput.value = '';
+            sendButton.disabled = true;
+            
+            processFlow(text);
+        }
+
+        // --- FUNCIONES PARA DIAGNÓSTICO TÉCNICO (FORMULARIO DE PREGUNTAS) ---
+        function startTechDiagnosis() {
+            flowState = "TECH_DIAG";
+            subStep = 1;
+            diagnosisAnswers = [];
+            currentQuestionIndex = 0;
+            addBotMessage("<span class='highlight-text'>Diagnóstico Técnico - Paso 1</span>\nPara ayudarte correctamente, elige una opción de la lista:", INCIDENT_TYPES);
+        }
+
+        function askNextQuestion() {
+            if (currentQuestionIndex < currentQuestions.length) {
+                const question = currentQuestions[currentQuestionIndex];
+                const totalQuestions = currentQuestions.length;
+                const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+                
+                // Generar un ID único para este input específico para evitar conflictos
+                const uniqueInputId = `question-input-${Date.now()}`;
+
+                // Crear HTML del formulario para la pregunta actual
+                const questionHTML = `
+                    <div class="ticket-form">
+                        <div class="form-group">
+                            <label class="form-label">Pregunta ${currentQuestionIndex + 1} de ${totalQuestions}</label>
+                            <div class="current-question">
+                                <div class="current-question-title">${question}</div>
+                            </div>
+                            
+                            <div class="progress-indicator">
+                                <span>Progreso: ${currentQuestionIndex + 1}/${totalQuestions}</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${progress}%"></div>
+                                </div>
+                                <span>${Math.round(progress)}%</span>
+                            </div>
+                            
+                            <input type="text" 
+                                   class="form-input question-input" 
+                                   id="${uniqueInputId}"
+                                   placeholder="Escribe tu respuesta aquí..."
+                                   autocomplete="off"
+                                   onkeypress="handleDiagnosisEnter(event, '${uniqueInputId}')">
+                            
+                            <div class="button-options" style="margin-top: 1rem;">
+                                <button class="button-option" onclick="handleNextQuestionAction('${uniqueInputId}')">
+                                    ${currentQuestionIndex < totalQuestions - 1 ? 'Siguiente pregunta' : 'Finalizar diagnóstico'}
+                                </button>
+                                <button class="button-option cancel-button" onclick="handleCancelDiagnosisAction()">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Agregar el mensaje con el formulario
+                addBotMessage(`**Diagnóstico de incidente**\nPor favor responde la siguiente pregunta:`, null, questionHTML);
+                
+                // Auto-foco en el input después de renderizar
+                setTimeout(() => {
+                    const input = document.getElementById(uniqueInputId);
+                    if (input) input.focus();
+                }, 200);
+
+            } else {
+                finishDiagnosis();
+            }
+        }
+
+        function handleQuestionResponse(answer) {
+            if (!answer.trim()) {
+                addBotMessage("⚠️ Por favor, escribe una respuesta antes de continuar.");
+                return;
+            }
+            
+            // Guardar la respuesta
+            diagnosisAnswers.push(answer.trim());
+            currentQuestionIndex++;
+            
+            // Limpiar el área de entrada del usuario
+            messageInput.value = '';
+            
+            // Mostrar siguiente pregunta o finalizar
+            if (currentQuestionIndex < currentQuestions.length) {
+                setTimeout(() => askNextQuestion(), 500);
+            } else {
+                finishDiagnosis();
+            }
+        }
+
+        function handleTechDiagnosis(input) {
+            if (subStep === 1) {
+                // El usuario seleccionó un tipo de incidente
+                currentIncidentType = input;
+                const incidentLabel = INCIDENT_TYPES.find(item => item.id === input)?.label || input;
+                
+                // Combinar preguntas básicas con preguntas específicas
+                const specificQuestions = TECH_QUESTIONS[currentIncidentType] || TECH_QUESTIONS.other;
+                currentQuestions = [...BASIC_QUESTIONS, ...specificQuestions];
+                
+                addBotMessage(`<span class='highlight-text'>Diagnóstico de ${incidentLabel}</span>\n\nVoy a hacerte ${currentQuestions.length} preguntas para entender mejor el problema. Responde cada una por favor.`);
+                
+                subStep = 2;
+                setTimeout(() => askNextQuestion(), 1500);
+            }
+        }
+
+        function finishDiagnosis() {
+            const severity = evaluateSeverity(currentIncidentType, diagnosisAnswers);
+            const incidentLabel = INCIDENT_TYPES.find(item => item.id === currentIncidentType)?.label || currentIncidentType;
+
+            // Preparar HTML del resumen
+            let summaryHTML = `
+                <div class="ticket-form">
+                    <div class="form-group">
+                        <label class="form-label">📋 Reporte Preliminar - ${incidentLabel}</label>
+                        <div class="current-question">
+                            <div class="current-question-title">Severidad estimada: <span class="${severity === 'Crítica' ? 'priority-critical' : severity === 'Alta' ? 'priority-high' : 'priority-medium'}">${severity}</span></div>
+                        </div>
+                        
+                        <div style="margin-top: 1rem; padding: 1rem; background: #f9fafb; border-radius: 0.5rem; font-size: 0.9rem;">
+                            <strong>Análisis realizado:</strong><br>
+                            Hemos recopilado ${diagnosisAnswers.length} puntos clave sobre el incidente.
+                        </div>
+
+                        <div class="quick-solution" style="margin-top: 1rem;">
+                            <div class="quick-solution-title">Acciones recomendadas:</div>
+                            ${QUICK_SOLUTIONS[currentIncidentType] ? 
+                                QUICK_SOLUTIONS[currentIncidentType].slice(0, 3).map(s => `• ${s}`).join('<br>') : 
+                                '• Contactar a soporte inmediatamente.<br>• No apagar el equipo si es forense.'}
+                        </div>
+                        
+                        <div class="button-options" style="margin-top: 1rem;">
+                            <button class="button-option" onclick="handleDownloadDiagnosisPDF()">
+                                <i class="fas fa-file-pdf"></i> Descargar Diagnóstico (PDF)
+                            </button>
+                            <button class="button-option" onclick="handleTicketFromDiagnosis()">
+                                Crear ticket de soporte
+                            </button>
+                        </div>
+                        
+                        <div class="button-options" style="margin-top: 0.5rem;">
+                            <button class="button-option cancel-button" onclick="handleCancelDiagnosisAction()">
+                                Volver al menú
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            addBotMessage("**Diagnóstico Finalizado**", null, summaryHTML);
+            flowState = "TECH_DIAG_SUMMARY";
+        }
+
+        function evaluateSeverity(incidentType, answers) {
+            // Unir todas las respuestas para buscar palabras clave
+            const allAnswers = answers.join(' ').toLowerCase();
+            
+            // Incidentes automáticamente críticos
+            if (incidentType === 'ransomware' || incidentType === 'leak') {
+                return 'Crítica';
+            }
+            
+            // Evaluar basado en palabras clave en las respuestas
+            const criticalKeywords = ['rescate', 'cifrado', 'robado', 'secuestrado', 'extorsión'];
+            const highKeywords = ['sí', 'si', 'no reconozco', 'cambiaron', 'comprometida', 'hackeado'];
+            
+            for (const keyword of criticalKeywords) {
+                if (allAnswers.includes(keyword)) {
+                    return 'Crítica';
+                }
+            }
+            
+            for (const keyword of highKeywords) {
+                if (allAnswers.includes(keyword)) {
+                    return 'Alta';
+                }
+            }
+            
+            // Para accesos no autorizados o cuentas comprometidas
+            if ((incidentType === 'access_unauth' || incidentType === 'account_compromised')) {
+                return 'Alta';
+            }
+            
+            // Por defecto, media
+            return 'Media';
+        }
+
+        function showTicketForm(incidentType = null, reason = null, severity = 'Media') {
+            flowState = "TICKET_FORM";
+            
+            // CORRECCIÓN: Ya no pre-llenamos la descripción con las preguntas
+            // Solo mostramos el motivo si es breve (ej: nombre del servicio)
+            let descriptionPlaceholder = "Describe los detalles adicionales de tu solicitud...";
+            let initialValue = ""; 
+            
+            // Si viene de "Servicios", ponemos el título, pero no un texto largo
+            if (reason && !reason.includes("Diagnóstico")) {
+                initialValue = reason;
+            }
+
+            let defaultSeverity = severity;
+            if (incidentType === 'ransomware' || incidentType === 'leak') {
+                defaultSeverity = 'Crítica';
+            }
+            
+            const formHTML = `
+                <div class="ticket-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Nombre Completo <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="ticket-name" placeholder="Tu nombre" oninput="validateTicketForm()" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Correo Electrónico <span class="required">*</span></label>
+                            <input type="email" class="form-input" id="ticket-email" placeholder="tucorreo@empresa.com" oninput="validateTicketForm()" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Empresa</label>
+                            <input type="text" class="form-input" id="ticket-company" placeholder="Empresa (Opcional)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Teléfono</label>
+                            <input type="tel" class="form-input" id="ticket-phone" placeholder="Teléfono (Opcional)">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Tipo de Problema <span class="required">*</span></label>
+                        <select class="form-select" id="ticket-problem-type" onchange="validateTicketForm()" required>
+                            <option value="">Selecciona el tipo</option>
+                            <option value="Acceso no autorizado" ${incidentType === 'access_unauth' ? 'selected' : ''}>Acceso no autorizado</option>
+                            <option value="Malware/Virus" ${incidentType === 'malware' ? 'selected' : ''}>Malware/Virus</option>
+                            <option value="Phishing" ${incidentType === 'phishing' ? 'selected' : ''}>Phishing</option>
+                            <option value="Ransomware" ${incidentType === 'ransomware' ? 'selected' : ''}>Ransomware</option>
+                            <option value="Cuenta comprometida" ${incidentType === 'account_compromised' ? 'selected' : ''}>Cuenta comprometida</option>
+                            <option value="Fuga de información" ${incidentType === 'leak' ? 'selected' : ''}>Fuga de información</option>
+                            <option value="Vulnerabilidad" ${incidentType === 'vuln' ? 'selected' : ''}>Vulnerabilidad</option>
+                            <option value="DDoS" ${incidentType === 'ddos' ? 'selected' : ''}>Ataque DDoS</option>
+                            <option value="Firewall/VPN" ${incidentType === 'firewall' || incidentType === 'vpn' ? 'selected' : ''}>Problema con Firewall/VPN</option>
+                            <option value="SIEM/Logs" ${incidentType === 'siem' ? 'selected' : ''}>SIEM / Logs / Monitoreo</option>
+                            <option value="Solicitud de Servicio" ${incidentType === null ? 'selected' : ''}>Interés en Servicio/Cotización</option>
+                            <option value="Otro">Otro consulta</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Descripción del caso <span class="required">*</span></label>
+                        <textarea class="form-textarea" id="ticket-description" placeholder="${descriptionPlaceholder}" rows="5" oninput="validateTicketForm()" required>${initialValue}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Prioridad <span class="required">*</span></label>
+                        <select class="form-select" id="ticket-priority" onchange="validateTicketForm()" required>
+                            <option value="Baja" ${defaultSeverity === 'Baja' ? 'selected' : ''}>Baja (2-6 horas)</option>
+                            <option value="Media" ${defaultSeverity === 'Media' ? 'selected' : ''}>Media (1-2 horas)</option>
+                            <option value="Alta" ${defaultSeverity === 'Alta' ? 'selected' : ''}>Alta (20-30 min)</option>
+                            <option value="Crítica" ${defaultSeverity === 'Crítica' ? 'selected' : ''}>Crítica (Inmediata)</option>
+                        </select>
+                    </div>
+                    
+                    <button type="button" class="form-submit" id="submit-ticket-btn" onclick="handleTicketSubmitAction()" disabled>Generar Ticket</button>
+                    <button type="button" class="cancel-button" onclick="handleTicketCancelAction()">Cancelar</button>
+                </div>
+            `;
+            
+            addBotMessage("**Nuevo Ticket de Soporte**\nCompleta los datos para registrar tu solicitud:", null, formHTML);
+            
+            setTimeout(() => { validateTicketForm(); }, 200);
+        }
+
+        function validateTicketForm() {
+            const nameInput = document.getElementById('ticket-name');
+            const emailInput = document.getElementById('ticket-email');
+            const problemTypeSelect = document.getElementById('ticket-problem-type');
+            const descriptionTextarea = document.getElementById('ticket-description');
+            const prioritySelect = document.getElementById('ticket-priority');
+            const submitBtn = document.getElementById('submit-ticket-btn');
+            
+            if (!nameInput || !emailInput || !problemTypeSelect || !descriptionTextarea || !prioritySelect || !submitBtn) {
+                return false;
+            }
+            
+            const isValid = 
+                nameInput.value.trim() !== '' &&
+                emailInput.value.trim() !== '' &&
+                emailInput.value.includes('@') &&
+                problemTypeSelect.value !== '' &&
+                descriptionTextarea.value.trim() !== '' &&
+                prioritySelect.value !== '';
+            
+            submitBtn.disabled = !isValid;
+            return isValid;
+        }
+
+        function handleTicketSubmit() {
+            if (!validateTicketForm()) {
+                addBotMessage("⚠️ Completa los campos obligatorios.");
+                return;
+            }
+            
+            const userDescription = document.getElementById('ticket-description').value;
+            let finalDescription = userDescription;
+
+            // CORRECCIÓN: Adjuntar el diagnóstico automáticamente AQUÍ, internamente.
+            if (diagnosisAnswers.length > 0) {
+                finalDescription += "\n\n--- DATOS DEL DIAGNÓSTICO PREVIO ---\n";
+                const totalQuestions = Math.min(diagnosisAnswers.length, currentQuestions.length);
+                for (let i = 0; i < totalQuestions; i++) {
+                    finalDescription += `P: ${currentQuestions[i]}\nR: ${diagnosisAnswers[i]}\n`;
+                }
+            }
+            
+            const ticketData = {
+                name: document.getElementById('ticket-name').value,
+                email: document.getElementById('ticket-email').value,
+                company: document.getElementById('ticket-company').value || 'Particular',
+                phone: document.getElementById('ticket-phone').value || 'No indicado',
+                problemType: document.getElementById('ticket-problem-type').value,
+                description: finalDescription, // Usamos la descripción combinada
+                priority: document.getElementById('ticket-priority').value,
+                ticketID: `TICKET-${Math.floor(Math.random() * 90000) + 10000}`,
+                date: new Date().toLocaleString('es-ES')
+            };
+            
+            addUserMessage("Ticket enviado");
+            processTicketCreation(ticketData);
+        }
+
+        function processTicketCreation(ticketData) {
+            isTyping = true;
+            messageInput.disabled = true;
+            typingIndicator.classList.remove('hidden');
+            scrollToBottom();
+            
+            // Guardar datos globalmente para el PDF
+            window.ticketData = ticketData;
+            
+            setTimeout(() => {
+                isTyping = false;
+                messageInput.disabled = false;
+                typingIndicator.classList.add('hidden');
+                
+                const responseTime = RESPONSE_TIMES[ticketData.priority] || 'Por definir';
+                const priorityColor = ticketData.priority === 'Crítica' ? '#dc2626' : ticketData.priority === 'Alta' ? '#d97706' : '#2563eb';
+                
+                const confirmationHTML = `
+                <div class="ticket-form" style="border-top: 4px solid #10b981;">
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <i class="fas fa-check-circle" style="font-size: 3rem; color: #10b981;"></i>
+                        <h3 style="color: #065f46; margin-top: 0.5rem;">¡Ticket Creado!</h3>
+                    </div>
+                    
+                    <div style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-size: 0.95rem;">
+                        <strong>ID:</strong> ${ticketData.ticketID}<br>
+                        <strong>Solicitante:</strong> ${ticketData.name}<br>
+                        <strong>Prioridad:</strong> <span style="color: ${priorityColor}; font-weight: bold;">${ticketData.priority}</span><br>
+                        <strong>Respuesta est.:</strong> ${responseTime}
+                    </div>
+
+                    <p style="margin-top: 1rem; font-size: 0.9rem; color: #6b7280;">
+                        Se ha enviado una copia a ${ticketData.email}.
+                    </p>
+
+                    <div class="button-options" style="margin-top: 1.5rem;">
+                        <button class="button-option" onclick="handleFinalDownloadAction()" style="background-color: #3b82f6; color: white; border: none;">
+                            <i class="fas fa-file-pdf"></i> Descargar Ticket (PDF)
+                        </button>
+                        <button class="button-option" onclick="showMainMenu()">
+                            <i class="fas fa-home"></i> Volver al Menú
+                        </button>
+                    </div>
+                </div>
+                `;
+                
+                addBotMessage("", null, confirmationHTML);
+                flowState = "END_SESSION";
+                
+            }, 1500);
+        }
+
+        function processFlow(input) {
+            const cleanInput = typeof input === 'string' ? input.toLowerCase() : '';
+
+            // Palabras clave de seguridad para activar diagnóstico automáticamente
+            const threatKeywords = ['hackeo', 'malware', 'virus', 'robo', 'phishing', 'ransomware', 'atacaron', 'comprometida', 'acceso no autorizado', 'compromiso de datos'];
+            const isThreat = threatKeywords.some(keyword => cleanInput.includes(keyword));
+            
+            // Si detectamos una amenaza y no estamos ya en un flujo técnico crítico
+            if (isThreat && flowState !== 'TECH_DIAG' && flowState !== 'END_SESSION' && flowState !== 'TICKET_FORM' && flowState !== 'TECH_DIAG_SUMMARY') {
+                startTechDiagnosis();
+                return;
+            }
+
+            // Comando global para cancelar/regresar al menú principal
+            if (cleanInput === 'menú' || cleanInput === 'menu' || cleanInput === 'cancelar' || cleanInput === 'salir') {
+                flowState = "MENU";
+                ticketData = {};
+                currentFaqList = [];
+                currentBillingList = [];
+                diagnosisAnswers = [];
+                currentIncidentType = '';
+                currentQuestions = [];
+                currentQuestionIndex = 0;
+                subStep = 0;
+                addBotMessage("🚫 Operación cancelada. Regresando al menú principal.", MENU_PRINCIPAL);
+                return;
+            }
+
+            switch (flowState) {
+                case "INIT":
+                case "MENU":
+                    switch (input) {
+                        case 'faq':
+                            flowState = "FAQ_MENU";
+                            addBotMessage("<span class='highlight-text'>Preguntas Frecuentes</span>\nSelecciona una categoría:", [
+                                { id: 'faq_access', label: '🔐 Accesos y Cuentas' },
+                                { id: 'faq_config', label: '🌐 Configuraciones Básicas' },
+                                { id: 'faq_security', label: '🛡️ Seguridad Básica' },
+                                { id: 'faq_general', label: '🕐 Información General' },
+                                { id: 'back', label: '🔙 Volver al Menú' }
+                            ]);
+                            break;
+                        case 'tech':
+                            startTechDiagnosis();
+                            break;
+                        case 'billing':
+                            flowState = "BILLING_MENU";
+                            addBotMessage("<span class='highlight-text'>Cuenta y Facturación</span>\nSelecciona el área de tu consulta:", [
+                                { id: 'billing_account', label: '👤 Cuenta' },
+                                { id: 'billing_invoice', label: '💳 Facturación' },
+                                { id: 'back', label: '🔙 Volver al Menú' }
+                            ]);
+                            break;
+                        case 'services':
+                            flowState = "SERVICES_MENU";
+                            addBotMessage("<span class='highlight-text'>Nuestros Servicios</span>\nSelecciona uno para ver detalles:", [
+                                ...SERVICES_DATA.map(s => ({ id: s.id, label: s.title })),
+                                { id: 'back', label: '🔙 Volver al Menú' }
+                            ]);
+                            break;
+                        case 'human':
+                            showTicketForm();
+                            break;
+                        default:
+                            addBotMessage("Por favor, selecciona una opción válida del menú o escribe tu consulta.", MENU_PRINCIPAL);
+                    }
+                    break;
+
+                case "FAQ_MENU":
+                    if (input === 'back') { showMainMenu(); return; }
+                    if (input === 'faq_access') showFaqList(FAQ_DATA.access);
+                    else if (input === 'faq_general') showFaqList(FAQ_DATA.general);
+                    else if (input === 'faq_config') showFaqList(FAQ_DATA.config);
+                    else if (input === 'faq_security') showFaqList(FAQ_DATA.security);
+                    else addBotMessage("Selecciona una categoría válida.");
+                    break;
+
+                case "FAQ_ANSWER_MODE":
+                    // CORREGIDO: Vuelve al menú de categorías FAQ, no al inicio
+                    if (input === 'back') { 
+                        flowState = "FAQ_MENU";
+                        addBotMessage("<span class='highlight-text'>Categorías FAQ</span>\nSelecciona una opción:", [
+                            { id: 'faq_access', label: '🔐 Accesos y Cuentas' },
+                            { id: 'faq_config', label: '🌐 Configuraciones Básicas' },
+                            { id: 'faq_security', label: '🛡️ Seguridad Básica' },
+                            { id: 'faq_general', label: '🕐 Información General' },
+                            { id: 'back', label: '🔙 Volver al Menú Principal' }
+                        ]);
+                        return; 
+                    }
+                    
+                    const questionObj = currentFaqList.find(q => q.id === input || q.label === input);
+                    if (questionObj) {
+                        addBotMessage(questionObj.answer);
+                        askIfSolved();
+                    } else {
+                        addBotMessage("Por favor selecciona una de las preguntas de la lista o pulsa Volver.");
+                    }
+                    break;
+
+                case "BILLING_MENU":
+                    if (input === 'back') { showMainMenu(); return; }
+                    
+                    if (input === 'billing_account') {
+                        showBillingList(BILLING_DATA.account);
+                    } else if (input === 'billing_invoice') {
+                        showBillingList(BILLING_DATA.billing);
+                    } else {
+                        addBotMessage("Por favor, selecciona Cuenta o Facturación.");
+                    }
+                    break;
+
+                case "BILLING_ANSWER_MODE":
+                    // CORREGIDO: Vuelve al menú de Facturación, no al inicio
+                    if (input === 'back') { 
+                        flowState = "BILLING_MENU";
+                        addBotMessage("<span class='highlight-text'>Cuenta y Facturación</span>\nSelecciona el área de tu consulta:", [
+                            { id: 'billing_account', label: '👤 Cuenta' },
+                            { id: 'billing_invoice', label: '💳 Facturación' },
+                            { id: 'back', label: '🔙 Volver al Menú Principal' }
+                        ]);
+                        return; 
+                    }
+                    
+                    const billQObj = currentBillingList.find(q => q.id === input || q.label === input);
+                    if (billQObj) {
+                        addBotMessage(billQObj.answer);
+                        askIfSolved();
+                    } else {
+                        addBotMessage("Por favor selecciona una de las preguntas de la lista o pulsa Volver.");
+                    }
+                    break;
+
+                case "SOLVED_CHECK":
+                    if (['si', 'sí', 'yes', 'claro'].includes(cleanInput)) {
+                        addBotMessage("✅ <span class='success-text'>¡Excelente!</span> Estoy aquí si necesitas algo más.");
+                        showMainMenu();
+                    } else {
+                        addBotMessage("Lamento no haber podido resolverlo automáticamente. ¿Deseas crear un ticket para soporte?", [
+                            { id: 'create_ticket', label: 'Sí, crear ticket' },
+                            { id: 'back', label: 'No, volver al menú' }
+                        ]);
+                        flowState = "SOLVED_CHECK_HANDLER";
+                    }
+                    break;
+
+                case "SOLVED_CHECK_HANDLER":
+                    if (input === 'create_ticket') {
+                        showTicketForm();
+                    } else {
+                        showMainMenu();
+                    }
+                    break;
+
+                case "SERVICES_MENU":
+                    if (input === 'back') { showMainMenu(); return; }
+                    const service = SERVICES_DATA.find(s => s.id === input);
+                    if (service) {
+                        ticketData.interestedService = service.title;
+                        const details = `📋 <span class="highlight-text">${service.title}</span>\n\n${service.desc}\n\n✅ <span class="success-text">Incluye:</span>\n${service.includes.map(i => `• ${i}`).join('\n')}\n\n👤 <span class="info-text">Está dirigido a:</span>\n${service.target}`;
+                        
+                        addBotMessage(details);
+                        setTimeout(() => {
+                            flowState = "SERVICE_CONVERSION";
+                            addBotMessage("¿Deseas una cotización, implementación o asesoría personalizada sobre este servicio?", [
+                                { id: 'yes_quote', label: 'Sí, solicitar cotización/asesoría' },
+                                { id: 'no_thanks', label: 'No, solo estaba mirando' }
+                            ]);
+                        }, 1200);
+                    }
+                    break;
+
+                case "SERVICE_CONVERSION":
+                    if (input === 'yes_quote') {
+                        addBotMessage("Para brindarte información personalizada y una propuesta adecuada, necesito registrar tu solicitud con uno de nuestros especialistas.");
+                        showTicketForm(null, `Interés comercial en servicio: ${ticketData.interestedService || 'Consultoría'}`);
+                    } else {
+                        // CORREGIDO: Vuelve a la lista de servicios
+                        flowState = "SERVICES_MENU";
+                        addBotMessage("Entendido. Aquí tienes la lista de servicios por si te interesa otro:", [
+                            ...SERVICES_DATA.map(s => ({ id: s.id, label: s.title })),
+                            { id: 'back', label: '🔙 Volver al Menú Principal' }
+                        ]);
+                    }
+                    break;
+
+                case "TECH_DIAG":
+                    // Maneja la selección inicial del tipo de incidente
+                    handleTechDiagnosis(input);
+                    break;
+                
+                // Estos estados ahora se manejan mayormente por los botones con onclick,
+                // pero se mantienen por si el usuario escribe texto manualmente.
+                case "TECH_DIAG_SUMMARY":
+                case "TECH_DIAG_OPTIONS":
+                    if (input === 'create_ticket') {
+                        handleTicketFromDiagnosis();
+                    } else if (input === 'back' || input.includes('menu')) {
+                        showMainMenu();
+                    } else {
+                        addBotMessage("Por favor utiliza los botones mostrados arriba para continuar o escribe 'menú' para salir.");
+                    }
+                    break;
+
+                case "TICKET_FORM":
+                    if (input === 'cancel') {
+                        showMainMenu();
+                    }
+                    break;
+
+                case "END_SESSION":
+                    if (input === 'menu') {
+                        showMainMenu();
+                    }
+                    break;
+
+                default:
+                    addBotMessage("No entendí esa instrucción. Regresando al menú.");
+                    showMainMenu();
+            }
+        }
+
+        function showFaqList(categoryData) {
+            currentFaqList = categoryData.questions.map((q, i) => ({ 
+                id: `q_${i}`, 
+                label: q.q, 
+                answer: q.a 
+            }));
+            
+            flowState = "FAQ_ANSWER_MODE";
+            
+            const options = [
+                ...currentFaqList.map((q, i) => ({ 
+                    id: q.id, 
+                    label: q.label 
+                })),
+                { id: 'back', label: '🔙 Volver' }
+            ];
+            
+            addBotMessage(`<span class="highlight-text">${categoryData.label}</span>\nSelecciona tu duda:`, options);
+        }
+
+        function showBillingList(categoryData) {
+            currentBillingList = categoryData.questions.map((q, i) => ({ 
+                id: `bq_${i}`, 
+                label: q.q, 
+                answer: q.a 
+            }));
+            
+            flowState = "BILLING_ANSWER_MODE";
+            
+            const options = [
+                ...currentBillingList.map((q, i) => ({ 
+                    id: q.id, 
+                    label: q.label 
+                })),
+                { id: 'back', label: '🔙 Volver' }
+            ];
+            
+            addBotMessage(`<span class="highlight-text">${categoryData.label}</span>\nSelecciona tu pregunta:`, options);
+        }
+
+        function askIfSolved() {
+            flowState = "SOLVED_CHECK";
+            setTimeout(() => {
+                addBotMessage("¿Esta información resolvió tu duda?", [{ id: 'Si', label: 'Sí' }, { id: 'No', label: 'No' }]);
+            }, 500);
+        }
+
+	// --- FUNCIONES GLOBALES DE CONTROL (NUEVO) ---
+        // Estas funciones permiten que los botones funcionen aunque el chat se redibuje
+
+        function handleNextQuestionAction(inputId) {
+            const input = document.getElementById(inputId);
+            if (input) {
+                handleQuestionResponse(input.value);
+            }
+        }
+
+        function handleCancelDiagnosisAction() {
+            addBotMessage("🚫 Diagnóstico cancelado.");
+            showMainMenu();
+        }
+
+        function handleDiagnosisEnter(event, inputId) {
+            if (event.key === 'Enter') {
+                handleNextQuestionAction(inputId);
+            }
+        }
+
+        function handleTicketCancelAction() {
+            addBotMessage("🚫 Formulario cancelado.");
+            showMainMenu();
+        }
+
+        // Wrapper para el submit que asegura que se ejecute correctamente
+        function handleTicketSubmitAction() {
+            handleTicketSubmit();
+        }
+
+	// --- FUNCIONES GLOBALES PARA DIAGNÓSTICO Y PDF (AGREGAR AL FINAL ANTES DE INIT) ---
+
+        function handleTicketFromDiagnosis() {
+            const incidentLabel = INCIDENT_TYPES.find(item => item.id === currentIncidentType)?.label || currentIncidentType;
+            const severity = evaluateSeverity(currentIncidentType, diagnosisAnswers);
+            showTicketForm(currentIncidentType, `Diagnóstico técnico: ${incidentLabel}`, severity);
+        }
+
+        function handleDownloadDiagnosisPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const incidentLabel = INCIDENT_TYPES.find(item => item.id === currentIncidentType)?.label || currentIncidentType;
+            const severity = evaluateSeverity(currentIncidentType, diagnosisAnswers);
+            
+            // Encabezado
+            doc.setFillColor(30, 58, 138);
+            doc.rect(0, 0, 210, 30, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.text('JP CYBEROPS - DIAGNÓSTICO PRELIMINAR', 105, 20, { align: 'center' });
+            
+            // Info General
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+            doc.text(`Fecha: ${new Date().toLocaleString()}`, 20, 45);
+            doc.text(`Tipo de Incidente: ${incidentLabel}`, 20, 55);
+            doc.text(`Severidad Estimada: ${severity}`, 20, 65);
+            
+            // Preguntas y Respuestas
+            doc.setDrawColor(200, 200, 200);
+            doc.line(20, 75, 190, 75);
+            
+            let yPos = 85;
+            doc.setFontSize(14);
+            doc.text("Detalles del Diagnóstico:", 20, yPos);
+            yPos += 10;
+            
+            doc.setFontSize(10);
+            const fullQuestions = [...BASIC_QUESTIONS, ...(TECH_QUESTIONS[currentIncidentType] || TECH_QUESTIONS.other)];
+            
+            fullQuestions.forEach((q, index) => {
+                if (diagnosisAnswers[index]) {
+                    // Pregunta
+                    doc.setFont("helvetica", "bold");
+                    const splitQ = doc.splitTextToSize(`P: ${q}`, 170);
+                    doc.text(splitQ, 20, yPos);
+                    yPos += (splitQ.length * 5);
+                    
+                    // Respuesta
+                    doc.setFont("helvetica", "normal");
+                    const splitA = doc.splitTextToSize(`R: ${diagnosisAnswers[index]}`, 170);
+                    doc.text(splitA, 25, yPos);
+                    yPos += (splitA.length * 5) + 5;
+                    
+                    if (yPos > 270) { doc.addPage(); yPos = 20; }
+                }
+            });
+            
+            // Recomendaciones
+            yPos += 5;
+            doc.setFillColor(240, 253, 244);
+            doc.rect(15, yPos, 180, 40, 'F');
+            doc.setFont("helvetica", "bold");
+            doc.text("Recomendaciones inmediatas:", 20, yPos + 10);
+            doc.setFont("helvetica", "normal");
+            
+            const solutions = QUICK_SOLUTIONS[currentIncidentType] || ["Contactar a soporte."];
+            solutions.slice(0, 3).forEach((sol, i) => {
+                doc.text(`• ${sol}`, 25, yPos + 20 + (i*6));
+            });
+
+            doc.save(`diagnostico-${currentIncidentType}.pdf`);
+            
+            addBotMessage("✅ PDF de diagnóstico generado y descargado.");
+        }
+        
+        function handleServicesBack() {
+             flowState = "SERVICES_MENU";
+             addBotMessage("<span class='highlight-text'>Nuestros Servicios</span>\nSelecciona uno para ver detalles:", [
+                ...SERVICES_DATA.map(s => ({ id: s.id, label: s.title })),
+                { id: 'back', label: '🔙 Volver al Menú' }
+             ]);
+        }
+	
+	function handleFinalDownloadAction() {
+            if (window.ticketData) {
+                generatePDFTicket(window.ticketData);
+                // Feedback visual pequeño
+                const btn = event.currentTarget;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Descargando...';
+                btn.disabled = true;
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            } else {
+                alert("Error: No hay datos de ticket para descargar.");
+            }
+        }
+
+        // --- INICIALIZACIÓN ---
+        function init() {
+            // Configurar event listeners
+            messageInput.addEventListener('input', () => {
+                sendButton.disabled = !messageInput.value.trim();
+            });
+            
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && messageInput.value.trim()) {
+                    handleSend();
+                }
+            });
+            
+            sendButton.addEventListener('click', handleSend);
+            
+            // Iniciar el chatbot después de un breve retraso
+            setTimeout(() => {
+                messageInput.disabled = false;
+                sendButton.disabled = true;
+                
+                addBotMessage("Hola 👋, soy el asistente virtual de JP CYBEROPS, especializado en soporte técnico y ciberseguridad.");
+                addBotMessage("Estoy aquí para ayudarte de forma rápida, clara y segura.\n\nResolveré tu consulta automáticamente siempre que sea posible, y si el caso es complejo, lo escalaré a un especialista humano.");
+                showMainMenu();
+            }, 500);
+        }
+
+        // Iniciar la aplicación cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
